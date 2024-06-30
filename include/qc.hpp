@@ -16,14 +16,17 @@
 namespace qc {
 
 // 判断表达式是否为ture原则上不执行函数
-#define qc_assert(expr)                                                        \
-    do {                                                                       \
-        if (!(expr)) {                                                         \
-            std::cerr << "Assertion failed:  " << #expr << " at " << __FILE__  \
-                      << ":" << __LINE__ << std::endl;                         \
-            std::abort();                                                      \
-        }                                                                      \
-    } while (0)                                                                \
+// __FILE__ 文件名
+// __LINE__ 行号
+// __func__ 函数名
+#define qc_assert(expr)                                                                         \
+    do {                                                                                        \
+        if (!(expr)) {                                                                          \
+            std::cerr << "Assertion failed:  " << #expr << " at " << __FILE__                   \
+                      << ":" << __LINE__ << " : " << __func__ << "()" << std::endl;             \
+            std::abort();                                                                       \
+        }                                                                                       \
+    } while (0)                                                                                 \
 
 /**
  * @details 编译器优化  qc_likely(x) -> x 大概率成立(1),优化;
