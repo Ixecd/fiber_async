@@ -19,6 +19,7 @@ namespace qc {
 // __FILE__ 文件名
 // __LINE__ 行号
 // __func__ 函数名
+// __PRETTY_FUNCTION__ 具体函数,包括模板参数
 #define qc_assert(expr)                                                                         \
     do {                                                                                        \
         if (!(expr)) {                                                                          \
