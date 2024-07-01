@@ -15,12 +15,15 @@
 #include <iostream>
 #include <memory>
 
+#include "scheduler.hpp"
 #include "qc.hpp"
 
 // 默认一个协程栈的大小为128KB
 #define DEFAULT_STACKSIZE 128 * 1024
 
 namespace qc {
+
+class Scheduler;
 
 class Fiber : public std::enable_shared_from_this<Fiber> {
 public:
