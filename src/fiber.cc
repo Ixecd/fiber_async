@@ -85,6 +85,7 @@ Fiber::ptr Fiber::GetThis() {
     // 下面创建线程的第一个协程
     Fiber::ptr main_fiber(new Fiber);
     qc_assert(t_fiber == main_fiber.get());
+    // 这是创建的第一个协程,也就是Main线程主协程
     t_thread_fiber = main_fiber;
     return t_fiber->shared_from_this();
 }
@@ -95,6 +96,7 @@ uint64_t Fiber::GetFiberId() {
     qc_assert(t_fiber != nullptr);
     return t_fiber->m_id;
 }
+
 /// @brief 只有任务协程才可以被reset
 /// @param cb 
 void Fiber::reset(std::function<void()> cb) {
@@ -118,21 +120,25 @@ void Fiber::resume() {
     qc_assert(m_state == READY);
     SetThis(this);
     m_state = RUNNING;
-    //if (m_runInScheduler) {
+    if (m_runInScheduler) {
+        /// @brief 跑在调度器上,应该和线程主协程互换
+        swapcontext(&(Scheduler::GetMainFiber()->m_ctx) ,&m_ctx);
+    } else {
+        /// @brief 不跑在调度器上,和Main线程主协程互换
         swapcontext(&(t_thread_fiber->m_ctx), &m_ctx);
-    //} else {
-        // swapcontext( ,&m_ctx)
-    //}
+    }
 }
 
 void Fiber::yield() {
     qc_assert(m_state == RUNNING);
     m_state = READY;
-    //if (m_runInScheduler) {
-        swapcontext(&m_ctx, &(t_thread_fiber->m_ctx));
-    //} else {
-        // 
-    //}
+    /// @details 一个协程的yeild()操作必定会回到线程主协程,之后由线程主协程来判断调度下一个协程
+    SetThis(t_thread_fiber.get());
+    if (m_runInScheduler) {
+        swapcontext(&m_ctx, &(Scheduler::GetMainFiber()->m_ctx));
+    } else {
+        swapcontext(&m_ctx, &(t_thread_fiber->m_ctx)); 
+    }
 }
 
 /// @brief 只有任务协程才会有这个函数,Main线程主协程和线程主协程都没有回调函数,也就不会调用这个函数
