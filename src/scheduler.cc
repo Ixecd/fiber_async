@@ -82,7 +82,7 @@ void Scheduler::start() {
 }
 
 void Scheduler::run() {
-    std::cout << "begin run" << std::endl;
+    // std::cout << "begin run" << std::endl;
     setThis();
     // 当前线程不是Main线程
     if (syscall(SYS_gettid) != _rootThread) {
@@ -103,12 +103,12 @@ void Scheduler::run() {
         {
             MutexType::Lock lock(_mutex);
 
-            std::cout << "_queue.size() = " << _queue.size() << std::endl;
+            // std::cout << "_queue.size() = " << _queue.size() << std::endl;
 
             auto it = _queue.begin();
             while (it != _queue.end()) {
                 // 有调度任务
-                std::cout << "_queue has task" << std::endl;
+                // std::cout << "_queue has task" << std::endl;
 
                 if (it->thread != -1 && it->thread != syscall(SYS_gettid)) {
                     tickle_me = true;
@@ -123,7 +123,7 @@ void Scheduler::run() {
                 ++_activeThreadCount;
                 break;
             }
-            std::cout << "get a task" << std::endl;
+            // std::cout << "get a task" << std::endl;
             // 当前线程拿到一个线程,任务队列不为空,告诉其他线程
             tickle_me |= (it != _queue.end());
         }
@@ -133,15 +133,15 @@ void Scheduler::run() {
             --_activeThreadCount;
             task.reset();
         } else if (task.cb) {
-            std::cout << "task.cb is not nullptr" << std::endl;
+            // std::cout << "task.cb is not nullptr" << std::endl;
             if (taskFiber) {
-                std::cout << "cur taskFiber is not nullptr" << std::endl;
+                // std::cout << "cur taskFiber is not nullptr" << std::endl;
                 taskFiber->reset(task.cb);
             } else {
-                std::cout << "cur taskFiebr is nullptr" << std::endl;
+                // std::cout << "cur taskFiebr is nullptr" << std::endl;
                 taskFiber.reset(new Fiber(task.cb));
             }
-            std::cout << "get taskFiber" << std::endl;
+            // std::cout << "get taskFiber" << std::endl;
             task.reset();
             taskFiber->resume();
             --_activeThreadCount;
@@ -177,9 +177,9 @@ void Scheduler::stop() {
     if (stopping()) return;
     _stopping = true;
 
-    std::cout << "stopping" << std::endl;
+    // std::cout << "stopping" << std::endl;
 
-    std::cout << "_queue.size() = " << _queue.size() << std::endl;
+    // std::cout << "_queue.size() = " << _queue.size() << std::endl;
 
     // stop指令只能由Main线程发起
     // 这里只有一个调度器实例所以,如果使用caller线程GetThis() == this
