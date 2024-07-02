@@ -10,6 +10,7 @@
  */
 
 #include "fiber.hpp"
+#include "scheduler.hpp"
 
 #include <atomic>
 
@@ -51,7 +52,7 @@ Fiber::Fiber() {
 }
 
 Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool run_in_scheduler)
-    : m_id(s_fiber_id++), m_cb(cb) {
+    : m_id(s_fiber_id++), m_cb(cb), m_runInScheduler(run_in_scheduler) {
     ++s_fiber_count;
     m_stacksize = stacksize ? stacksize : DEFAULT_STACKSIZE;
     m_stack = StackAllocator::Alloc(m_stacksize);
@@ -130,8 +131,8 @@ void Fiber::resume() {
 }
 
 void Fiber::yield() {
-    qc_assert(m_state == RUNNING);
-    m_state = READY;
+    qc_assert(m_state == RUNNING || m_state == TERM);
+    if (m_state != TERM) m_state = READY;
     /// @details 一个协程的yeild()操作必定会回到线程主协程,之后由线程主协程来判断调度下一个协程
     SetThis(t_thread_fiber.get());
     if (m_runInScheduler) {
