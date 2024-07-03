@@ -48,6 +48,8 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name) {
     } else
         _rootThread = -1;
 
+    t_scheduler = this;
+
     _threads_count = threads;
 }
 
@@ -82,7 +84,7 @@ void Scheduler::start() {
 }
 
 void Scheduler::run() {
-    // std::cout << "begin run" << std::endl;
+    std::cout << "begin run" << std::endl;
     setThis();
     // 当前线程不是Main线程
     if (syscall(SYS_gettid) != _rootThread) {
