@@ -1,6 +1,6 @@
 # Coroutine Library
 1. 关于Fiber类
-    协程分为Main线程主协程、线程主协程、一般协程,其中Main线程主协程和线程主协程负责调度,没有cb也没有stack,使用一个bool变量m_runInScheduler来判断当前协程是否run在调度其上,如果这个值为false表示当前协程是线程主协程,swapcontext需要和Main线程主协程进行交换.
+    协程分为Caller线程主协程、线程主协程、一般协程,其中Caller线程主协程又称为根协程,有栈也有回调函数,绑定的是Schduler::run,调度器停止工作后会让Caller线程主协程再清理一次任务队列,线程主协程负责调度,没有cb也没有stack,使用一个bool变量m_runInScheduler来判断当前协程是否run在调度器上,如果这个值为false表示当前协程是线程主协程,swapcontext需要和Caller线程主协程(根协程)进行交换.
     
 2. 关于namespace std
     切记一般不要在头文件中使用using namespce std 因为可能导致歧义
