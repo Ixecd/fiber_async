@@ -38,15 +38,19 @@ void FdContext::resetEventContext(FdContext::EventContext &ctx) {
 }
 
 void FdContext::triggerEvent(Event event) {
-    std::cout << "triggerEvent" << std::endl;
-    qc_assert(m_events& event);
+    std::cout << "triggerEvent event : " << event << std::endl;
+    qc_assert(m_events & event);
     // 这里触发完之后不需要去除事件,因为一次触发对应一次删除
     // m_events = (Event)(m_events & ~event);
     EventContext &ctx = getEventContext(event);
-    if (ctx.cb) 
+    if (ctx.cb) {
+        std::cout << "ctx.cb is not nullptr" << std::endl;
+        if (ctx.scheduler == nullptr) std::cout << "ctx.scheduler is nullptr" << std::endl;
+        else std::cout << "ctx.scheduler is not nullptr" << std::endl;
         ctx.scheduler->add_task(ctx.cb);
-    else ctx.scheduler->add_task(ctx.fiber);
+    } else ctx.scheduler->add_task(ctx.fiber);
     resetEventContext(ctx);
+    std::cout << " add_task in triggerEvent succ " << std::endl;
     return;
 }
 
@@ -122,8 +126,10 @@ void IOManager::idle() {
         }
 
         for (size_t i = 0; i < rt; ++i) {
+            std::cout << "get event" << std::endl;
             epoll_event &event = events[i];
             if (event.data.fd == m_tickleFds[0]) {
+                std::cout << "tickle().." << std::endl;
                 uint8_t dummy[256];
                 // 由于这里m_tickleFds的触发模式为ET,所以下面要用while一直读完才行
                 while (read(m_tickleFds[0], dummy, sizeof(dummy)) > 0);
@@ -132,6 +138,7 @@ void IOManager::idle() {
 
             FdContext *fd_ctx = (FdContext *)event.data.ptr;
             // 对事件操作要加锁
+            // 这里的问题,这里加了一次锁,后面del的时候还要加锁,加了两次锁
             FdContext::MutexType::Lock lock(fd_ctx->m_mutex);
 
             /**
@@ -149,15 +156,17 @@ void IOManager::idle() {
             if ((fd_ctx->m_events & real_events) == NONE) continue;
 
             // 剔除已经发生的事件
-            int left_events = (fd_ctx->m_events & ~real_events);
-            int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
+            // int left_events = (fd_ctx->m_events & ~real_events);
+            // int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
 
-            // READ == EPOLLIN -> 0x001
-            // WRITE == EPOLLOUT -> 0x004
-            event.events = EPOLLET | left_events;
+            // // READ == EPOLLIN -> 0x001
+            // // WRITE == EPOLLOUT -> 0x004
+            // event.events = EPOLLET | left_events;
 
-            rt = epoll_ctl(m_epfd, op, fd_ctx->m_fd, &event);
-            qc_assert(!rt);
+            // rt = epoll_ctl(m_epfd, op, fd_ctx->m_fd, &event);
+            // qc_assert(!rt);
+
+            lock.unlock();
 
             // 处理已经发生的事件
             if (real_events & READ) {
@@ -217,7 +226,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     // ---
 
     epoll_event epevent;
-    epevent.events = fd_ctx->m_events | event | EPOLLET;
+    epevent.events = fd_ctx->m_events | EPOLLET;
     epevent.data.ptr = fd_ctx;
 
     // fd 不存在
@@ -226,6 +235,8 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     qc_assert(!rt);
 
     ++m_pendingEventCount;
+
+    // 添加完之后,由IOManager::idle()进行触发,触发完之后由其删除
 
     // 添加完之后要触发
     // fd_ctx->triggerEvent(event);
@@ -237,13 +248,20 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
 }
 
 bool IOManager::delEvent(int fd, Event event) {
+    std::cout << "in delEvent" << std::endl;
     RWMutexType::ReadLock lock(m_mutex);
     if ((int)m_fdContexts.size() <= fd) return false;
     FdContext *fd_ctx = m_fdContexts[fd];
     lock.unlock();
 
+    std::cout << "before get FdContext::MutexType::Lock" << std::endl;
+    // 没拿到锁
     FdContext::MutexType::Lock lock2(fd_ctx->m_mutex);
-    if (!(fd_ctx->m_events & event)) return false;
+    std::cout << "after get FdContext::MutexType::Lock" << std::endl;
+    if (!(fd_ctx->m_events & event)) {
+        std::cout << "del not exits event" << std::endl;
+        return false;
+    }
 
     // 清除指定的事件
     Event real_event = (Event)(fd_ctx->m_events & ~event);
@@ -262,6 +280,8 @@ bool IOManager::delEvent(int fd, Event event) {
     fd_ctx->m_events = real_event;
     FdContext::EventContext &event_ctx = fd_ctx->getEventContext(event);
     fd_ctx->resetEventContext(event_ctx);
+
+    std::cout << "delEvent succ" << std::endl;
     return true;
 }
 
