@@ -21,6 +21,10 @@ void do_io_write() {
         std::cout << "connect fail" << std::endl;
     } 
     std::cout << "connect succ" << std::endl;
+
+    char buf[128] = "hello i am client!\n";
+    int writelen = write(sockfd, buf, sizeof(buf));
+    std::cout << "client send succ : " << buf << std::endl;
 }
 
 void do_io_read() {
@@ -39,6 +43,7 @@ void do_io_read() {
         std::cout << "err, errno = " << errno << ", errstr" << strerror(errno) << std::endl;
     }
 
+    // 这里事件执行完之后才会清除事件,事件中不能再添加相同事件,
     // read 之后重新添加读事件回调,这里不能直接调用addEvent,因为在当前位置fd的读上下文中依然有效如果直接调用addEvent相当于重复添加相同事件
     IOManager::GetThis()->add_task(watch_io_read);
 }

@@ -69,7 +69,8 @@ void test_iomanager() {
     memset((char *)&svr_addr, 0, sizeof(svr_addr));
     svr_addr.sin_family = AF_INET;
     svr_addr.sin_port = htons(port);
-    svr_addr.sin_addr.s_addr = INADDR_ANY;
+    inet_aton("127.0.0.1", &svr_addr.sin_addr);
+    // svr_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(listen_sock, (struct sockaddr *)&svr_addr, sizeof(svr_addr)) < 0) {
         std::cout << "bind error" << std::endl;
