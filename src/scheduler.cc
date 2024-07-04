@@ -125,7 +125,7 @@ void Scheduler::run() {
                 ++_activeThreadCount;
                 break;
             }
-            // std::cout << "get a task" << std::endl;
+            std::cout << "get a task" << std::endl;
             // 当前线程拿到一个线程,任务队列不为空,告诉其他线程
             tickle_me |= (it != _queue.end());
         }
