@@ -125,7 +125,7 @@ void IOManager::idle() {
             break;  // 直接当前协程结束执行
         }
 
-        for (size_t i = 0; i < rt; ++i) {
+        for (int i = 0; i < rt; ++i) {
             std::cout << "get event" << std::endl;
             epoll_event &event = events[i];
             if (event.data.fd == m_tickleFds[0]) {
@@ -347,6 +347,7 @@ bool IOManager::cancelAll(int fd) {
 
     // 之前的逻辑并没有对fd_ctx中的m_events进行操作,为什么这里就会变成NONE??
     qc_assert(fd_ctx->m_events == NONE);
+    return true;
 }
 
 IOManager::~IOManager() {
