@@ -91,9 +91,9 @@ public:
         if (_queue.empty()) need_tickle = true;
         ScheduleTask task(t, thread);
         _queue.push_back(task);
+        std::cout << "add task sucess" << std::endl;
         return need_tickle;
     }
-
 
     /// @brief 协程调度函数
     void run();
