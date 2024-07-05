@@ -11,6 +11,7 @@
 
 #pragma once
 #include "scheduler.hpp"
+#include "timer.hpp"
 
 namespace qc {
 
@@ -45,7 +46,7 @@ private:
     MutexType m_mutex;
 };
 
-class IOManager : public Scheduler {
+class IOManager : public Scheduler, public TimerManager {
 public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef RWMutex RWMutexType;
@@ -81,6 +82,8 @@ public:
     bool stopping() override;
 
     static IOManager* GetThis();
+
+    void OnTimerInsertedAtFront() override;
 
 private:
     int m_epfd;
