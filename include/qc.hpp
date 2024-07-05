@@ -11,7 +11,8 @@
 #pragma once
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
+#include <ctime>
 
 namespace qc {
 
@@ -42,5 +43,6 @@ namespace qc {
 #define qc_likely(x) (x)
 #define qc_unlikely(x) (x)
 #endif
+
 
 }
