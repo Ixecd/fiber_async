@@ -55,7 +55,7 @@ void FdContext::triggerEvent(Event event) {
 }
 
 IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
-    : Scheduler(threads, use_caller, name) {
+    : Scheduler(threads, use_caller, name), TimerManager() {
     m_epfd = epoll_create(5000);
     // 返回一个文件描述符
     qc_assert(m_epfd > 0);
@@ -108,6 +108,7 @@ void IOManager::idle() {
         events, [](epoll_event *ptr) { delete[] ptr; });
 
     while (true) {
+        // std::cout << "in while ..." << std::endl;
         if (stopping()) {
             std::cout << "name = " << getName() << "idle stopping exit"
                       << std::endl;
@@ -115,8 +116,14 @@ void IOManager::idle() {
         }
         // 下面设定最大的阻塞事件
         static const int MAX_TIMEOUT = 5000;
+
+        // 获取下次超时时间
+        uint64_t next_timeout = getNextTimer();
+
         // rt == 0 超时
-        int rt = epoll_wait(m_epfd, events, MAX_EVENTS, MAX_TIMEOUT);
+        if (next_timeout == ~0ull) next_timeout = 6000;
+        else std::cout << "next_timeout = " << next_timeout << std::endl;
+        int rt = epoll_wait(m_epfd, events, MAX_EVENTS, std::min((int)next_timeout, MAX_TIMEOUT));
         if (rt < 0) {
             if (errno == EINTR) continue;
             std::cout << "epoll_wait(" << m_epfd << ") (rt = " << rt
@@ -124,6 +131,16 @@ void IOManager::idle() {
                       << " ) (errset : " << strerror(errno) << " )";
             break;  // 直接当前协程结束执行
         }
+
+        // 定时任务比较要紧放前面
+        std::vector<std::function<void()>> cbs;
+        listExpiredCb(cbs);
+        // std::cout << "after list size = " << cbs.size() << std::endl;
+        for (const auto &cb : cbs) {
+            add_task(cb);
+            // std::cout << "add_task succ" << std::endl;
+        }
+        cbs.clear();
 
         for (int i = 0; i < rt; ++i) {
             std::cout << "get event" << std::endl;
@@ -367,4 +384,7 @@ IOManager* IOManager::GetThis() {
     return dynamic_cast<IOManager*>(Scheduler::GetThis());
 }
 
+void IOManager::OnTimerInsertedAtFront() {
+    tickle();
+}
 }  // namespace qc
