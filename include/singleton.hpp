@@ -14,6 +14,7 @@
 
 namespace qc {
 
+// 懒汉式 C11之前用的是new要考虑线程安全问题
 template<class T, class X = void, int N = 0>
 class Singleton {
 public:
@@ -22,6 +23,19 @@ public:
         return &v;
     }
 };
+
+// 饿汉式
+template <class T>
+class ESingleton {
+    static T* GetInstance() {
+        return &v;
+    }
+private:
+    static T v;
+};
+
+template <class T>
+T ESingleton<T>:: v;
 
 template<class T, class X = void, int N = 0>
 class SingletonPtr {
