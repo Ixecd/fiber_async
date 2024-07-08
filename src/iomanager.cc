@@ -377,8 +377,9 @@ IOManager::~IOManager() {
 }
 
 bool IOManager::stopping() {
-    return m_pendingEventCount == 0 && Scheduler::stopping();
+    return m_pendingEventCount == 0 && Scheduler::stopping() && this->m_timers.size() == 0;
 }
+
 
 IOManager* IOManager::GetThis() {
     return dynamic_cast<IOManager*>(Scheduler::GetThis());
