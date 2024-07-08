@@ -27,7 +27,7 @@ uint64_t GetElapsedMS();
 
 class Timer : public std::enable_shared_from_this<Timer> {
     friend class TimerManager;
-
+    friend class IOManager;
 public:
     typedef std::shared_ptr<Timer> ptr;
 
@@ -68,7 +68,7 @@ private:
 /// 一般在类中定义了虚析构函数,同时还要定义拷贝构造函数,拷贝赋值函数,移动构造,移动赋值
 class TimerManager : public std::enable_shared_from_this<TimerManager> {
     friend class Timer;
-
+    friend class IOManager;
 public:
     typedef std::shared_ptr<TimerManager> ptr;
     typedef RWMutex RWMutexType;
@@ -76,7 +76,7 @@ public:
     TimerManager();
     virtual ~TimerManager();
 
-    Timer::ptr add_timer(uint64_t ms, std::function<void()> cb, bool recurring);
+    Timer::ptr add_timer(uint64_t ms, std::function<void()> cb, bool recurring = false);
 
     uint64_t getNextTimer();
 
