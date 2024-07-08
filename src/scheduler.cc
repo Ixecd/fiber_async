@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2024
  *
  */
+#include "hook.hpp"
 #include "scheduler.hpp"
 
 #include <sys/syscall.h>
@@ -85,6 +86,7 @@ void Scheduler::start() {
 
 void Scheduler::run() {
     std::cout << "begin run" << std::endl;
+    set_hook_enable(true);
     setThis();
     // 当前线程不是Main线程
     if (syscall(SYS_gettid) != _rootThread) {
