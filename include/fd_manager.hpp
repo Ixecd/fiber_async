@@ -13,7 +13,6 @@
 
 #include <memory>
 #include <vector>
-#include "hook.hpp"
 #include "mutex.hpp"
 #include "singleton.hpp"
 #include "thread.hpp"
