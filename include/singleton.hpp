@@ -35,7 +35,7 @@ private:
 };
 
 template <class T>
-T ESingleton<T>:: v;
+T ESingleton<T>:: v = new (&ESingleton::v) (T);
 
 template<class T, class X = void, int N = 0>
 class SingletonPtr {
